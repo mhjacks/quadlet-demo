@@ -1,0 +1,14 @@
+[Unit]
+Description=Postgres 15 in podman
+
+#[Install]
+#WantedBy=default.target
+
+[Kube]
+Yaml=/home/martjack/pgpod/pg-podman.yaml
+PublishPort=5432:5432
+
+[Service]
+Restart=always
+KillMode=control-group
+TimeoutStopSec=10
