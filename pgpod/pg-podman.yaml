@@ -10,21 +10,25 @@ spec:
     requests:
       storage: 5Gi
 ---
+# Note: we can do more complex init with a shell script (i.e. multiple DBs, multiple users) but setting passwords for
+# them all gets a bit gnarly as it would involve mounting multiple things into the entrypoint dir and I'm not sure
+# I'm ready for that. (Could also load that as a secret but I don't want to change the structure here too much - had
+# this as an example and wanted to make sure I could use the scheme)
 kind: ConfigMap
 apiVersion: v1
 metadata:
   name: dbinit
 data:
   dbinit.sql: |-
-    \c coffeeshopdb;
+    \c coffeeshop;
     DROP SCHEMA IF EXISTS inventory CASCADE;
-    CREATE SCHEMA inventory AUTHORIZATION coffeeshopuser;
+    CREATE SCHEMA inventory AUTHORIZATION coffeeshop;
     DROP SCHEMA IF EXISTS coffeeshop CASCADE;
-    CREATE SCHEMA coffeeshop AUTHORIZATION coffeeshopuser;
+    CREATE SCHEMA coffeeshop AUTHORIZATION coffeeshop;
     DROP SCHEMA IF EXISTS kitchen CASCADE;
-    CREATE SCHEMA kitchen AUTHORIZATION coffeeshopuser;
+    CREATE SCHEMA kitchen AUTHORIZATION coffeeshop;
     DROP SCHEMA IF EXISTS barista CASCADE;
-    CREATE SCHEMA barista AUTHORIZATION coffeeshopuser;
+    CREATE SCHEMA barista AUTHORIZATION coffeeshop;
     alter table if exists coffeeshop.LineItems
       drop constraint if exists FK6fhxopytha3nnbpbfmpiv4xgn;
     drop table if exists coffeeshop.LineItems cascade;
@@ -96,14 +100,14 @@ data:
     );
     alter table if exists inventory.Inventory add constraint FK4gqdqmrew97itl6ola2uh50tu
       foreign key (productMaster_sku_id) references inventory.ProductMaster;
-    grant all on all tables in schema "coffeeshop" to coffeeshopuser;
-    grant all on all tables in schema "coffeeshop" to coffeeshopadmin;
-    grant all on all tables in schema "inventory" to coffeeshopuser;
-    grant all on all tables in schema "inventory" to coffeeshopadmin;
-    grant all on all tables in schema "barista" to coffeeshopuser;
-    grant all on all tables in schema "barista" to coffeeshopadmin;
-    grant all on all tables in schema "kitchen" to coffeeshopuser;
-    grant all on all tables in schema "kitchen" to coffeeshopadmin;
+    grant all on all tables in schema "coffeeshop" to coffeeshop;
+    grant all on all tables in schema "coffeeshop" to coffeeshop;
+    grant all on all tables in schema "inventory" to coffeeshop;
+    grant all on all tables in schema "inventory" to coffeeshop;
+    grant all on all tables in schema "barista" to coffeeshop;
+    grant all on all tables in schema "barista" to coffeeshop;
+    grant all on all tables in schema "kitchen" to coffeeshop;
+    grant all on all tables in schema "kitchen" to coffeeshop;
 ---
 kind: Deployment
 apiVersion: v1
@@ -116,10 +120,8 @@ spec:
         - name: postgres
           image: docker.io/library/postgres:15
           env:
-            - name: POSTGRES_DB
-              value: coffeeshopdb
             - name: POSTGRES_USER
-              value: coffeeshopuser
+              value: coffeeshop
           envFrom:
             - secretRef:
                 name: postgres-secret
