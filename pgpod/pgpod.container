@@ -1,7 +1,8 @@
 [Container]
 Image=docker.io/library/postgres:15
-Exec=postgres -c log_statement=all
+Exec=postgres -c log_statement=all -c log_destination=stderr
 Volume=pgdata:/var/lib/postgresql/data
 Environment=POSTGRES_USER=postgres
 Environment=POSTGRES_PASSWORD=pgadmin
 PublishPort=5432:5432
+PodmanArgs=--log-driver journald
